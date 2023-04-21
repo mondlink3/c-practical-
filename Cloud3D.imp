@@ -1,0 +1,173 @@
+#include <cassert>
+#include <cstdlib>
+#include <iostream>
+
+using namespace std;
+template <typename T>
+Cloud3D<T>::Cloud3D():Cloud3D(DEFAULT_SIZE ,DEFAULT_SIZE,DEFAULT_SIZE)
+{
+}
+template <typename T>
+Cloud3D<T>::Cloud3D(int intLength, int intBreadth, int intDepth)
+{
+ enforceRange(intLength,MIN_SIZE,MAX_SIZE);
+ enforceRange(intBreadth,MIN_SIZE,MAX_SIZE);
+ enforceRange(intDepth,MIN_SIZE,MAX_SIZE);
+ allocateCloud(intLength,intBreadth,intDepth);
+}
+template <typename T>
+Cloud3D<T>::Cloud3D(const Cloud3D<T> &objOriginal): Cloud3D(objOriginal._length,objOriginal._breadth,objOriginal._depth)
+{
+ copyCloud(objOriginal);
+}
+template <typename T>
+Cloud3D<T>& Cloud3D<T>::operator=(const Cloud3D<T>& objRHS)
+{
+ if(this != &objRHS)
+ {
+     freeCloud();
+     allocateCloud(objRHS._length,objRHS._breadth,objRHS._depth);
+     copyCloud(objRHS);
+ }
+}
+template <typename T>
+bool& Cloud3D<T>::operator()(int x,int y ,int z)
+{
+ enforceRange(x,0,_length-1);
+ enforceRange(y,0,_breadth-1);
+ enforceRange(z,0,_depth-1);
+ return _points[x][y][z];
+}
+template <typename T1>
+ostream& operator << (ostream& sLHS,const Cloud3D<T1>& objRHS)
+{
+    for(int l = 0 ; l < objRHS._length ; l++)
+    {
+        for(int b = 0 ; b < objRHS._breadth ; b++)
+        {
+            for(int d = 0 ; d < objRHS._depth ; d++)
+            {
+                sLHS << "@(" << l << ". "
+                             << b << ", "
+                             << d << ") is ";
+                if(objRHS._points[l][b][d])
+                {
+                    sLHS << "Occupied";
+                }else
+                {
+                    sLHS << "Unoccupied";
+                }
+                sLHS << endl;
+            }
+        }
+    }
+  return sLHS;
+}
+template <typename T1>
+istream& operator >> (istream& isLHS,const Cloud3D<T1>& objRHS)
+{
+    int intLength,intBreadth , intDepth;
+    isLHS >>intLength >> intBreadth >> intDepth ;
+    objRHS.allocateCloud(intLength,intBreadth,intDepth);
+    T1 t1Value ;
+    for(int l = 0 ; l < objRHS.getLength ; l++)
+    {
+        for(int b = 0 ; b < objRHS.getBreadth; b++)
+        {
+            for(int d = 0 ; d < objRHS.getDepth ;d++)
+            {
+                isLHS >> t1Value;
+                objRHS[l][b][d] = t1Value ;
+            }
+        }
+    }
+    return isLHS;
+}
+template <typename T>
+int Cloud3D<T>::getLength() const
+{
+ return _length;
+}
+template <typename T>
+int Cloud3D<T>::getBreadth() const
+{
+    return _breadth;
+}
+template <typename T>
+int Cloud3D<T>::getDepth() const
+{
+  return _depth;
+}
+template <typename T>
+Cloud3D<T>::~Cloud3D()
+{
+  freeCloud();
+}
+template <typename T>
+void Cloud3D<T>::enforceRange(int intValue, int intMin,int intMax) const
+{
+    if(intValue < intMin)
+    {
+        cerr << intValue << " < " << intMin <<endl;
+        exit(ERROR_RANGE_LOW);
+    }
+    if(intValue > intMax )
+    {
+        cerr << intValue << " > " << intMax <<endl;
+        exit(ERROR_RANGE_HIGH);
+    }
+
+}
+template <typename T>
+void Cloud3D<T>::allocateCloud(int intLength,int intBreadth, int intDepth)
+{
+    _length = intLength;
+    _breadth = intBreadth;
+    _depth = intDepth ;
+
+    _points = new bool**[_length];
+    for(int l = 0 ; l<_length ; l++)
+    {
+        _points[l] = new bool*[_breadth];
+        for(int b = 0 ; b<_breadth; b++ )
+        {
+            _points[l][b] = new bool[_depth];
+            for(int d = 0 ; d < _depth ; d++)
+            {
+                _points[l][b][d] = false ;
+            }
+        }
+    }
+}
+template <typename T>
+void Cloud3D<T>::freeCloud()
+{
+    for(int l= 0 ; l<_length ; l++)
+    {
+      for(int b=0 ; b<_breadth ; b++)
+      {
+         delete [] _points[l][b];
+      }
+      delete [] _points[l];
+    }
+    delete _points;
+
+}
+template <typename T>
+void Cloud3D<T>::copyCloud(const Cloud3D& objOriginal)
+{
+  assert(_length == objOriginal._length);
+  assert(_breadth == objOriginal._breadth);
+  assert(_depth == objOriginal._depth);
+  for(int l= 0 ; l<_length ; l++)
+  {
+      for(int b=0 ; b<_breadth ; b++)
+      {
+          for(int d =0 ; d<_depth ;d++)
+          {
+              _points[l][b][d] = objOriginal._points[l][b][d];
+          }
+      }
+  }
+}
+
